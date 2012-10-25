@@ -1,0 +1,9 @@
+# compiled java
+*.class
+bin/**
+.settings/**
+# java package files
+*.jar
+*.war
+*.ear
+.classpath

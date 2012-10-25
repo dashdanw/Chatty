@@ -1,0 +1,127 @@
+digraph Chatty {
+  label="chatty"
+  fontname = "Bitstream Vera Sans"
+  fontsize = 8
+  node [
+    fontname = "Bitstream Vera Sans"
+    fontsize = 8
+    shape = "record"
+  ]
+
+  edge [
+    fontname = "Bitstream Vera Sans"
+    fontsize = 8
+    arrowhead = "empty"
+  ]
+  subgraph clusterview {
+    label="chatty.view"
+    subgraph clusterhtml {
+      label="chatty.view.htmleditor"
+      ImageFilter [ label="{ImageFilter||+accept(File)\l+getDescription\l}"]
+      ImagePreview [ label="{ImagePreview||+loadImage()\l+paintComponent(Graphics)\l+propertyChange(PropertyChangeEvent)\l"]
+      
+
+      HTMLDocumentExt [label="{HTMLDocumentExt||insertBeforeEnd(Element)\linsertString\lremove(int,int)\lsetContainer\l}"]
+      HTMLDocumentPrinter [label="{HTMLDocumentPrinter||print\lprintHTMLString\lsetScaleWidthToFit\lsetSize\l}"]
+      HTMLEditor [label="{HTMLEditor||actionPerformed\laddInputListener\lappendHTML\ldrag\ldrop\lfocusOnText\lgetHTML\lgetHTMLBody\lonClose\lprintDocument\lprintSetup\lsetDefaultHTML\lsetHTML\l}"]
+      HTMLEditorPane [label="{HTMLEditorPane||getScrollableTracksViewport\lisAntialiasing\lpaint\lsetAntialiasing\lsetSize\l}"]
+      HTMLEditorSettings [label="{HTMLEditorSettings||getFont\lgetModuleName\linitialize\lsave\lsetFont\l}"]
+      ImageDialog [label="{ImageDialog||actionPerformed\lupdatePreview\lwindowActivated\lwindowClosed\lwindowDeactivated\lwindowIconified\lwindowDeiconified\lwindowOpened\l}"]
+      LinkDialog [label="{LinkDialog||actionPerformed\l}"]
+
+      HTMLDocumentPrinter -> HTMLEditor [ arrowhead = "odiamond" ]
+      HTMLDocumentExt  -> HTMLEditor  [ arrowhead = "odiamond" ]
+      ImageDialog  -> HTMLEditor [ arrowhead = "odiamond" ]
+      LinkDialog  -> HTMLEditor [ arrowhead = "odiamond" ]
+      HTMLEditorSettings -> HTMLEditor [arrowhead="odiamond"]
+      ImagePreview -> ImageDialog [arrowhead="odiamond"]
+      ImageFilter -> ImageDialog [arrowhead="odiamond"]
+      HTMLEditorPane -> HTMLEditor [arrowhead="odiamond"]
+    }
+
+    ChattyView [
+      label = "{ChattyView|-_msgPanel\l-_userPanel\l-_inputPanel\l|+sendMessage(String)\l}"
+    ]
+
+    UserPanel    [ label="{UserPanel||+update\l}" ]
+    MessagePanel [ label="{MessagePanel||+update\l}"]
+    InputPanel   [ label="{InputPanel||+sendMessage\l}"]
+  }
+  Observer     [ label="{java.util.Observer}" ]
+  Observer -> UserPanel [ style="dashed" ]
+  Observer -> MessagePanel [ style="dashed"]
+  MessagePanel -> ChattyView [ arrowhead = "odiamond" ]
+  InputPanel -> ChattyView [ arrowhead = "odiamond" ]
+  HTMLEditor -> InputPanel [arrowhead = "odiamond"]
+  HTMLEditor -> MessagePanel [arrowhead="odiamond"]
+  UserPanel -> ChattyView [ arrowhead = "odiamond" ]
+
+  subgraph clustercontroller {
+    label="chatty.controller"
+    ChattyController [
+      label="{ChattyController||+userRespondToPing\l+messageReceived\l+sendMessage\l+userSignOn\l+userSignOff\l+}"
+    ]
+    Inbox [
+      label="{Inbox||+responseReceived\l+dispatchResponse\l+messageFromBytes\l+userFromBytes\l+decode(byte[])\l}"
+    ]
+    Outbox [
+      label="{Outbox|-_pendingMessages|\l+userGotMessage(userID,msgID)\l+sendMessage(String)\l+sendSignOn\l+sendSignOff\l+resendPendingMessages\l}"
+    ]
+    ByteMaster [
+      label="{ByteMaster||+createPing():byte[]\l+decode(byte[])\l-decodeSignOffMessage(byte[])\l-decodeSignOnMessage(byte[])\l-decodeNameChange(byte[])\l-decodePing(byte[])\l-decodeChatMessage(byte[])\l+encodeChatMessage(String)\l+encodeNameChange(byte[])\l+encodeOutgoingMessage(OutgoingMessage)\lencodeSignOffMessage(String,Date)\lencodeSignOnMessage(String,Date)\l}"
+    ]
+    Settings [
+      label="{Settings||$getInstance()\lchangeUserName()\lgetCurrentUserName\lgetApplicationName\lgetLookAndFeel\lsave\l}"
+    ]
+  }
+
+  Inbox -> ChattyController [arrowhead="odiamond"]
+  Outbox -> ChattyController [arrowhead="odiamond"]
+  ChattyView -> ChattyController [arrowhead="odiamond"]
+  ByteMaster -> Inbox [arrowhead="odiamond"]
+  ByteMaster -> Outbox [arrowhead="odiamond"]
+
+  subgraph clustermodel {
+    label = "chatty.model"
+    ChattyModel [
+      label="{ChattyModel||+messageReceived\l+userRespondToPing\l+userSignOn\l+userSignOff\l+getUserList\l+getMessageList\l+logMessages\l}"
+    ]
+    Observable [ label="{java.util.Observable}" ]
+    UserManager [
+      label="{UserManager||+messageReceived\l+userRespondToPing(userID)\l+getUserByID(userID)\l+userSignOn\l+userSignOff\l+getOnlineUsers\l+getUsersNeedingPing\l}"
+    ]
+    MessageManager [
+      label="{MessageManager||+messageReceived\l+getMessageList\l}"
+    ]
+    Message [
+      label="{\<interface\> Message|+getSender\l+getMessageID\l+getTimestamp\l+getText\l}"
+    ]
+    OutgoingMessage [
+      label="{OutgoingMessage||+getSender\l+getMessageID\l+getTimestamp\l+getText\l+toBytes\l}"
+    ]
+    IncomingMessage [
+      label="{IncomingMessage|+getSender\l+getMessageID\l+getTimestamp\l+getText\l}"
+    ]
+  }
+  ChattyModel -> ChattyController [arrowhead="odiamond"]
+  UserManager -> ChattyModel [arrowhead="odiamond"]
+  MessageManager -> ChattyModel [arrowhead="odiamond"]
+  Observable -> UserManager
+  Observable -> MessageManager
+  Message -> OutgoingMessage [style="dashed"]
+  Message -> IncomingMessage [style="dashed"]
+  Message -> MessageManager [arrowhead="odiamond"]
+
+  UserPanel -> UserManager [
+    arrowhead="none"
+    label="Observes"
+  ]
+  MessagePanel -> MessageManager [
+    arrowhead="none"
+    label="Observes"
+  ]
+  Outbox -> UserManager [
+    arrowhead="none"
+    label="Observes"
+  ]
+}
